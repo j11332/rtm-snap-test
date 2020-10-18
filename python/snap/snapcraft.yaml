@@ -1,0 +1,61 @@
+name: rtm-python
+base: core18
+version: '0.1'
+summary: OpenRTM nameserver
+description: |
+  OpenRTM-aist-python
+confinement: 'strict'
+grade: devel
+architectures:
+  - amd64
+layout:
+  /usr/local:
+    bind: ${SNAP}/usr/local
+
+apps:
+  rtshell:
+    command: bash
+    plugs:
+      - network
+      - network-bind
+parts:
+  omniorb:
+    plugin: make
+    source: https://downloads.sourceforge.net/project/omniorb/omniORB/omniORB-4.3.0/omniORB-4.3.0-b1.tar.bz2
+    build-environment:
+      - DESTDIR: ${SNAPCRAFT_PART_INSTALL}
+
+    override-build: |
+      ${SNAPCRAFT_PART_SRC}/configure --prefix=/usr/local
+      snapcraftctl build
+    
+    make-parameters: 
+      - "-j${SNAPCRAFT_PARALLEL_BUILD_COUNT}"
+
+  omniorbpy:
+    plugin: make
+    source: https://downloads.sourceforge.net/project/omniorb/omniORBpy/omniORBpy-4.3.0/omniORBpy-4.3.0-b1.tar.bz2
+    build-environment:
+      - DESTDIR: ${SNAPCRAFT_PART_INSTALL}
+
+    override-build: |
+      ${SNAPCRAFT_PART_SRC}/configure --prefix=/usr/local --with-omniorb=${SNAPCRAFT_STAGE}/usr/local
+      snapcraftctl build
+    
+    make-parameters: 
+      - "-j${SNAPCRAFT_PARALLEL_BUILD_COUNT}"
+
+    after: [omniorb]
+    
+#  openrtm-python:
+#    plugin: python
+#    source: https://github.com/OpenRTM/OpenRTM-aist-Python.git
+#
+#    build-environment:
+#      - PYTHONPATH: "${PYTHONPATH}:${SNAPCRAFT_PART_INSTALL}/lib/python3.6/site-packages"
+#    
+#    build-packages:
+#      - doxygen
+#      - python3-sphinx
+#      - omniidl
+#      - omniidl-python
