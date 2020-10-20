@@ -1,12 +1,13 @@
-name: rtm
+name: openrtm
 base: core18
-version: '0.1'
+version: '1.2.2-r0.2'
 summary: OpenRTM nameserver
 description: |
   OpenRTM-aist
 
 confinement: 'strict'
 grade: devel
+
 architectures:
   - amd64
 
@@ -31,39 +32,83 @@ apps:
       - network-bind
 
 parts:
+  omniorb:
+    plugin: make
+    source: https://downloads.sourceforge.net/project/omniorb/omniORB/omniORB-4.2.4/omniORB-4.2.4.tar.bz2
+    build-environment:
+      - DESTDIR: ${SNAPCRAFT_PART_INSTALL}
+    override-build: |
+      ${SNAPCRAFT_PART_SRC}/configure --prefix=/usr --with-openssl=/usr
+      snapcraftctl build
+    make-parameters: 
+      - "-j${SNAPCRAFT_PARALLEL_BUILD_COUNT}"
+    build-packages:
+      - g++
+      - pkg-config
+      - libssl-dev
+      - python3-dev
+    stage:
+      - usr/*
+      - -usr/**/__pycache__/*.pyc
+
+  omniorbpy:
+    plugin: make
+    source: https://downloads.sourceforge.net/project/omniorb/omniORBpy/omniORBpy-4.2.4/omniORBpy-4.2.4.tar.bz2
+    build-environment:
+      - DESTDIR: ${SNAPCRAFT_PART_INSTALL}
+    override-build: |
+      ${SNAPCRAFT_PART_SRC}/configure --prefix=/usr --with-omniorb=${SNAPCRAFT_STAGE}/usr
+      snapcraftctl build
+#     
+    make-parameters: 
+      - "-j${SNAPCRAFT_PARALLEL_BUILD_COUNT}"
+    after: [omniorb]
+
   openrtm:
     source: https://github.com/openrtm/OpenRTM-aist.git
     source-tag: v1.2.2
     plugin: autotools
+    configflags:
+      - --without-doxygen
+      - --with-omniorb=${SNAPCRAFT_STAGE}/usr
+      - --prefix=/usr
+      - --disable-fluentd
+      - --disable-test
+      - CXXFLAGS=-Wno-deprecated -Wno-Wunused-result -Wno-sign-compare -Wno-unused-variable
+    after: [omniorb]
     build-packages:
-      - autoconf
-      - autotools-dev
-      - libtool
+      - pkg-config
       - libtool-bin
-      - bc
-      - flex
-      - bison
-      - iputils-ping
-      - python3-yaml
-      - gcc
-      - g++
-      - cmake
-      - doxygen
-      - graphviz
-      - nkf
-      - git
       - uuid-dev
       - libboost-filesystem-dev
-      - build-essential
-      - debhelper
-      - devscripts
-      - omniidl
-      - omniidl-python
     stage-packages:
-      - omniorb-nameserver
-      - libomniorb4-dev
-      - omniidl
-      - libboost-filesystem-dev
-      - libboost-system-dev
-      - libomniorb4-2
-      - libomnithread4
+      - libboost-filesystem1.65.1
+      - libboost-system1.65.1
+#      - autoconf
+#      - autotools-dev
+#      - libtool
+#      - libtool-bin
+#      - bc
+#      - flex
+#      - bison
+#      - iputils-ping
+#      - python3-yaml
+#      - gcc
+#      - g++
+#      - cmake
+#      - doxygen
+#      - graphviz
+#      - nkf
+#      - git
+#      - uuid-dev
+#      - build-essential
+#      - debhelper
+#      - devscripts
+#     stage-packages:
+#       - omniorb-nameserver
+#       - libomniorb4-dev
+#       - omniidl
+#       - libboost-filesystem-dev
+#       - libboost-system-dev
+#       - libomniorb4-2
+#       - libomnithread4
