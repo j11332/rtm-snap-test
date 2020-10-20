@@ -8,12 +8,12 @@ $ sudo snap install --edge openrtm
 ## ConsoleIn/Out RTC
 **別にrtshell/ RT System Editor による接続が必要**。
 1. RTC を起動する
-- Terminal #1 (w/ manager)
+- Terminal #1
 ```
 $ openrtm.ConsoleOutComp
 ```
 
-- Terminal #2
+- Terminal #2 (w/ manager)
 ```
 $ openrtm.ConsoleInComp -d
 ```
