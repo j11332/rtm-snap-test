@@ -1,12 +1,13 @@
 name: openrtm
 base: core18
-version: '0.1'
-summary: OpenRTM nameserver + ConsoleIn/ConsoleOut RTC
+version: '1.2.2-r0.2'
+summary: OpenRTM Nameserver + ConsoleIn/ConsoleOut RTC
 description: |
   OpenRTM-aist
 
 confinement: 'strict'
 grade: devel
+
 architectures:
   - amd64
 
@@ -19,77 +20,67 @@ apps:
       - network-bind
   
   ConsoleInComp:
-    command: share/openrtm-2.0/components/c++/examples/ConsoleInComp
+    command: share/openrtm-1.2/components/c++/examples/ConsoleInComp
     plugs:
       - network
       - network-bind
   
   ConsoleOutComp:
-    command: share/openrtm-2.0/components/c++/examples/ConsoleOutComp
+    command: share/openrtm-1.2/components/c++/examples/ConsoleOutComp
     plugs:
       - network
       - network-bind
-  
-build-packages:
-    - autoconf
-    - libtool
-    - libtool-bin
-    - bc
-    - flex
-    - bison
-    - iputils-ping
-    - net-tools
-    - python3-yaml
-    - gcc
-    - g++
-    - make
-    - cmake
-    - doxygen
-    - graphviz
-    - nkf
-    - subversion
-    - git
-    - uuid-dev
-    - libboost-filesystem-dev
-    - build-essential
-    - debhelper
-    - devscripts
-    - libomniorb4-dev
-    - omniidl
-    - omniorb-nameserver
 
 parts:
-    fluent-bit:
-        source: https://github.com/fluent/fluent-bit.git
-        plugin: cmake
-        configflags:
-            - -DFLB_DEBUG=Off
-            - -DFLB_TRACE=Off
-            - -DFLB_JEMALLOC=On
-            - -DFLB_TLS=On
-            - -DFLB_SHARED_LIB=On
-            - -DFLB_EXAMPLES=Off
-            - -DFLB_HTTP_SERVER=On
-            - -DFLB_IN_SYSTEMD=On
-            - -DFLB_OUT_KAFKA=On
-            - -DCMAKE_BUILD_TYPE=Release
+  omniorb:
+    plugin: make
+    source: https://downloads.sourceforge.net/project/omniorb/omniORB/omniORB-4.2.4/omniORB-4.2.4.tar.bz2
+    build-environment:
+      - DESTDIR: ${SNAPCRAFT_PART_INSTALL}
+    override-build: |
+      ${SNAPCRAFT_PART_SRC}/configure --prefix=/usr --with-openssl=/usr
+      snapcraftctl build
+    make-parameters: 
+      - "-j${SNAPCRAFT_PARALLEL_BUILD_COUNT}"
+    build-packages:
+      - g++
+      - pkg-config
+      - libssl-dev
+      - python3-dev
+    stage:
+      - usr/*
+      - -usr/**/__pycache__/*.pyc
 
-    openrtm:
-        source: https://github.com/openrtm/OpenRTM-aist.git
-        plugin: cmake
-        configflags:
-          - -DSSL_ENABLE=ON
-          - -DOBSERVER_ENABLE=OFF
-          - -DFLUENTBIT_ENABLE=OFF
-          - -DFLUENTBIT_ROOT=usr/local/include
-          - -DROS_ENABLE=OFF
-          - -DFASTRTPS_ENABLE=OFF
-          - -DROS2_ENABLE=OFF
-          - -DCMAKE_BUILD_TYPE=Release
-        stage-packages:
-          - omniorb-nameserver
-          - libboost-filesystem1.65.1
-          - libboost-system1.65.1
-          - libomniorb4-2
-          - libomnithread4
-        after: [fluent-bit]
+  omniorbpy:
+    plugin: make
+    source: https://downloads.sourceforge.net/project/omniorb/omniORBpy/omniORBpy-4.2.4/omniORBpy-4.2.4.tar.bz2
+    build-environment:
+      - DESTDIR: ${SNAPCRAFT_PART_INSTALL}
+    override-build: |
+      ${SNAPCRAFT_PART_SRC}/configure --prefix=/usr --with-omniorb=${SNAPCRAFT_STAGE}/usr
+      snapcraftctl build
+#     
+    make-parameters: 
+      - "-j${SNAPCRAFT_PARALLEL_BUILD_COUNT}"
+    after: [omniorb]
+
+  openrtm:
+    source: https://github.com/openrtm/OpenRTM-aist.git
+    source-tag: v1.2.2
+    plugin: autotools
+    configflags:
+      - --without-doxygen
+      - --with-omniorb=${SNAPCRAFT_STAGE}/usr
+      - --prefix=/usr
+      - --disable-fluentd
+      - --disable-test
+      - CXXFLAGS=-Wno-deprecated -Wno-Wunused-result -Wno-sign-compare -Wno-unused-variable
+    after: [omniorb]
+    build-packages:
+      - pkg-config
+      - libtool-bin
+      - uuid-dev
+      - libboost-filesystem-dev
+    stage-packages:
+      - libboost-filesystem1.65.1
+      - libboost-system1.65.1
