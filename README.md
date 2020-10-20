@@ -18,4 +18,4 @@ $ openrtm.ConsoleOutComp
 $ openrtm.ConsoleInComp -d
 ```
 
-2. ** RT System Editor または rtshell などで RTC を接続**し，ConsoleIn 側に整数値を入力すると ConsoleOut RTC 側に表示される。
+2. **RT System Editor または rtshell などで RTC を接続**し，ConsoleIn 側に整数値を入力すると ConsoleOut RTC 側に表示される。
