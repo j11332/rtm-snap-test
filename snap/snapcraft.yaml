@@ -1,6 +1,6 @@
 name: openrtm
 base: core18
-version: '1.2.2-r0.2'
+version: '1.2.2-r0.3'
 summary: OpenRTM Nameserver + ConsoleIn/ConsoleOut RTC
 description: |
   OpenRTM-aist
@@ -11,22 +11,26 @@ grade: devel
 architectures:
   - amd64
 
+layout:
+  /usr:
+    bind: $SNAP/usr
+
 apps:
   naming:
-    command: omniNames -start -always -datadir $SNAP_USER_DATA
+    command: usr/bin/omniNames -start -always -datadir $SNAP_USER_DATA
     daemon: simple
     plugs:
       - network
       - network-bind
   
   ConsoleInComp:
-    command: share/openrtm-1.2/components/c++/examples/ConsoleInComp
+    command: usr/share/openrtm-1.2/components/c++/examples/ConsoleInComp
     plugs:
       - network
       - network-bind
   
   ConsoleOutComp:
-    command: share/openrtm-1.2/components/c++/examples/ConsoleOutComp
+    command: usr/share/openrtm-1.2/components/c++/examples/ConsoleOutComp
     plugs:
       - network
       - network-bind
